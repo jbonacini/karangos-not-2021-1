@@ -13,7 +13,7 @@ import axios from 'axios'
 
 const useStyles = makeStyles(() => ({
   form: {
-    maxWidth: '90%',
+    maxWidth: '80%',
     margin: '0 auto',
     display: 'flex',
     justifyContent: 'space-around',
@@ -21,7 +21,7 @@ const useStyles = makeStyles(() => ({
     '& .MuiFormControl-root': {
       minWidth: '200px',
       maxWidth: '500px',
-      margin: '0 24px 24px 0'
+      marginBottom: '24px',
     }
   },
   toolbar: {
@@ -35,12 +35,11 @@ const useStyles = makeStyles(() => ({
   }
 }))
 
-/*  Classes de caracteres de entrada para a máscara do campo placa
-1) Três primeiras posições: qualquer letra, de A a Z (maiúsculo ou minúsculo) ~> [A-Za-z]
-2) Posições numéricas (1ª, a 3ª e a 4ª depois do traço) ~> [0-9]
-3) 2ª posição após o traço: pode receber dígitos ou letras de A a J (maiúsculas ou minúsculas) ~> [0-9A-Ja-j]
- */
-
+/* Classes de caracteres de entrada para a máscara do campo placa 
+  1) Três primeiras posições: qualquer letra, de A a Z (maiúsculo ou minúsculo) ~> [A-Za-z]
+  2) Posições numéricas (1ª, a 3ª e a 4ª depois do traço) ~> [0-9]
+  3) 2º posição após o traço: pode receber dígitos ou letras de A a J (maiúsculas ou minúsculas) ~> [0-9A-Ja-j]
+*/
 
 // Representando as classes de caracteres da máscara como um objeto
 const formatChars = {
@@ -68,58 +67,64 @@ export default function KarangosForm() {
     placa: '',
     preco: 0
   })
-
   const [currentId, setCurrentId] = useState()
   const [importadoChecked, setImportadoChecked] = useState()
 
   function handleInputChange(event, property) {
+    
+    // Se houver id no event.target, ele será o nome da propriedade
+    // senão, usaremos o valor do segundo parâmetro
+    if(event.target.id) property = event.target.id
 
-    if (event.target.id) property = event.target.id
-
-    if (property === 'importado') {
-      const newState = !importadoChecked
-      setKarango({ ...karango, importado: (newState ? '1' : '0') })
-    } else if (property === 'placa') {
-      setKarango({ ...karango, [property]: event.target.value.toUpperCase() })
-    } else {
+    if(property === 'importado') {
+      const newState = ! importadoChecked
+      setKarango({...karango, importado: (newState ? '1': '0')})
+      setImportadoChecked(newState)
+    }
+    else if(property === 'placa') {
+      setKarango({...karango, [property]: event.target.value.toUpperCase()}) 
+    }
+    else {
       // Quando o nome de uma propriedade de um objeto aparece entre [],
       // isso se chama "propriedade calculada". O nome da propriedade vai
       // corresponder à avaliação da expressão entre os colchetes
       setCurrentId(event.target.id)
-      setKarango({ ...karango, [property]: event.target.value })
+      setKarango({...karango, [property]: event.target.value})
     }
   }
 
   function years() {
     let result = []
-    for (let i = (new Date()).getFullYear(); i >= 1900; i--) result.push(i)
+    for(let i = (new Date()).getFullYear(); i >= 1900; i--) result.push(i)
     return result
   }
 
-  async function saveData(){
+  async function saveData() {
     try {
       await axios.post('https://api.faustocintra.com.br/karangos', karango)
       alert('Dados salvos com sucesso!')
       // A FAZER: retornar à página de listagem
-    } catch (error){
+    }
+    catch(error) {
       alert('ERRO: ' + error.message)
     }
   }
 
-  function handleSubmit(event){
-
-    event.preventDefault()
+  function handleSubmit(event) {
+    
+    event.preventDefault() // Evita o recarregamento da página
 
     saveData()
+    
   }
 
   return (
     <>
       <h1>Cadastrar Novo Karango</h1>
       <form className={classes.form} onSubmit={handleSubmit}>
-
+        
         <TextField id="marca" label="Marca" variant="filled" value={karango.marca} onChange={handleInputChange} fullWidth />
-
+        
         <TextField id="modelo" label="Modelo" variant="filled" value={karango.modelo} onChange={handleInputChange} fullWidth />
 
         <TextField id="cor" label="Cor" variant="filled" value={karango.cor} onChange={event => handleInputChange(event, 'cor')} select fullWidth>
@@ -135,22 +140,35 @@ export default function KarangosForm() {
           <MenuItem value="Preto">Preto</MenuItem>
           <MenuItem value="Roxo">Roxo</MenuItem>
           <MenuItem value="Verde">Verde</MenuItem>
-          <MenuItem value="Vermelho">Vermelho</MenuItem>
+          <MenuItem value="Vermelho">Vermelho</MenuItem>        
         </TextField>
 
         <TextField id="ano_fabricacao" label="Ano de Fabricacao" variant="filled" value={karango.ano_fabricacao} onChange={event => handleInputChange(event, 'ano_fabricacao')} select fullWidth>
-          {
-            years().map(year => <MenuItem value={year}>{year}</MenuItem>)
-          }
+          { years().map(year => <MenuItem value={year}>{year}</MenuItem>) }
         </TextField>
 
-        <TextField id="preco" label="Preço" variant="filled" value={karango.preco} onChange={handleInputChange} fullWidth type="number" onFocus={event => event.target.select()}
+        <TextField 
+          id="preco" 
+          label="Preço" 
+          variant="filled" 
+          value={karango.preco} 
+          onChange={handleInputChange} 
+          fullWidth 
+          type="number"
+          onFocus={event => event.target.select()} 
           InputProps={{
             startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-          }} />
+          }}
+        />
 
-        <InputMask formatChars={formatChars} mask={placaMask} id='placa' onChange={event => handleInputChange(event, 'placa')} value={karango.placa}>
-          {() => <TextField label='Placa' variant='filled' fullWidth />}
+        <InputMask 
+          formatChars={formatChars} 
+          mask={placaMask} 
+          id="placa" 
+          onChange={event => handleInputChange(event, 'placa')} 
+          value={karango.placa}
+        >
+          {() => <TextField label="Placa" variant="filled" fullWidth />}
         </InputMask>
 
         <FormControl className={classes.checkbox} fullWidth>
@@ -164,8 +182,8 @@ export default function KarangosForm() {
           <Button variant="contained" color="secondary" type="submit">Enviar</Button>
           <Button variant="contained">Voltar</Button>
         </Toolbar>
-
-        <div>{JSON.stringify(karango)}</div>
+            
+        <div>{JSON.stringify(karango)}<br />currentId: {currentId}</div>
       </form>
     </>
   )
